@@ -38,8 +38,31 @@ async def add_message(user_id, username):
         print(e)
         return
 
+async def check_username(username):
+    try:
+        with sqlite3.connect(path_to_db1) as conn:
+            cursor = conn.cursor()
+            # выполняем запрос к базе данных
+            cursor.execute('SELECT user_money FROM user_database WHERE user_name=?', (username,))
+            logging.info("DATABASE: Пользователь в поиске")  # делаем запись в логах
+            return cursor.fetchone()
+    except Exception as e:
+        logging.error("Ошибка в базе данных: ", e)  # если ошибка - записываем её в логи
+        return
 
-async def check_user(user_id):
+async def check_user_id(username):
+    try:
+        with sqlite3.connect(path_to_db1) as conn:
+            cursor = conn.cursor()
+            # выполняем запрос к базе данных
+            cursor.execute('SELECT user_id FROM user_database WHERE user_name=?', (username,))
+            logging.info("DATABASE: Пользователь в поиске")  # делаем запись в логах
+            return cursor.fetchone()
+    except Exception as e:
+        logging.error("Ошибка в базе данных: ", e)  # если ошибка - записываем её в логи
+        return
+
+async def check_user_top(user_id):
     try:
         # подключаемся к базе данных
         with sqlite3.connect(path_to_db1) as conn:
@@ -68,6 +91,7 @@ async def get_balance(user_id):
     except Exception as e:
         print(e)
 
+
 async def edit_balance(user_id, user_balance):
     try:
         with sqlite3.connect(path_to_db1) as conn:
@@ -80,13 +104,15 @@ async def edit_balance(user_id, user_balance):
     except Exception as e:
         print(e)
 
+
 async def get_top():
     try:
         with sqlite3.connect(path_to_db1) as conn:
             cursor = conn.cursor()
+            # Изменен запрос для выборки имени пользователя и его денег
             cursor.execute('''
-                SELECT user_id, user_money FROM user_database
-                ORDER BY user_money DESC
+                SELECT user_name, user_money FROM user_database
+                ORDER BY user_money DESC, user_name
                 LIMIT 10
             ''')
             return cursor.fetchall()

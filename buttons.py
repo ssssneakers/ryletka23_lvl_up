@@ -2,9 +2,10 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeybo
 
 # 🎮 Меню игр
 menu_markup = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text='🎮 Меню игр')],
-    [KeyboardButton(text='👤 Профиль')],
-    [KeyboardButton(text='Таблица лидеров 🏆')],
+    [KeyboardButton(text='🎮 Меню игр🎮')],
+    [KeyboardButton(text='👤 Профиль👤')],
+    [KeyboardButton(text='🏆Таблица лидеров 🏆')],
+    [KeyboardButton(text='💵Перевод💵')],
     [KeyboardButton(text='📞 Контакты')]
 ], resize_keyboard=True,
     input_field_placeholder='👉 Выберите пункт меню'
@@ -32,7 +33,7 @@ game2 = InlineKeyboardMarkup(inline_keyboard=[
 ], resize_keyboard=True)
 
 game3 = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text='🕹️ Еще раз')],
+    [KeyboardButton(text='🕹️ Еще раз🕹️')],
     [KeyboardButton(text='↩️ Назад')]
 ], resize_keyboard=True)
 
