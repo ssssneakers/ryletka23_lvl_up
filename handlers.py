@@ -7,7 +7,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.filters.command import Command
-from aiogram.types.input_file import FSInputFile
+from aiogram.types import FSInputFile
 
 from config import admin_ids
 from database import *
@@ -350,6 +350,7 @@ async def back_Reply(message: Message):
 async def base(message: Message):
     try:
         user_id = message.from_user.id
+        print(user_id, admin_ids)
         if str(user_id) not in admin_ids:
             await message.answer("Только для админов")
             return
