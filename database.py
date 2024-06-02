@@ -104,6 +104,30 @@ async def edit_balance(user_id, user_balance):
     except Exception as e:
         print(e)
 
+async def get_all_balance():
+    try:
+        with sqlite3.connect(path_to_db1) as conn:
+            cursor = conn.cursor()
+            # Измените запрос, чтобы получить идентификатор пользователя и его баланс
+            cursor.execute('''
+                SELECT user_id, user_money FROM user_database
+            ''')
+            return cursor.fetchall()
+    except Exception as e:
+        print(e)
+
+async def get_user_rank(user_id):
+    try:
+        all_user_balance = await get_all_balance()
+        # Убедитесь, что сортировка выполняется по балансу (второй элемент кортежа)
+        sorted_balance = sorted(all_user_balance, key=lambda x: x[1], reverse=True)
+        # Теперь словарь рангов будет создан правильно
+        user_ranks = {uid: rank for rank, (uid, _) in enumerate(sorted_balance, start=1)}
+        # Возвращаем ранг пользователя
+        return user_ranks.get(user_id)
+    except Exception as e:
+        print(e)
+
 
 async def get_top():
     try:

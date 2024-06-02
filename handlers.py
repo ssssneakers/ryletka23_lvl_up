@@ -49,14 +49,20 @@ async def start(message: Message):
 @router.message(F.text == "🏆Таблица лидеров 🏆")
 async def tab(message: Message):
     try:
+        user_id = message.from_user.id
+        user_balance = await get_balance(user_id)
         top_users = await get_top()
         leaderboard_text = 'Таблица лидеров:\n'
         for i, (username, money) in enumerate(top_users, start=1):
             leaderboard_text += f'{i}. 😎@{username} - {money} $\n'
         await message.answer(leaderboard_text)
+        user_top = await get_user_rank(user_id)
+        await message.answer(f"🏆 Твой рейтинг: {user_top}\n"
+                             f"Твой Баланс: {user_balance} $")
     except Exception as e:
         await message.answer("❗️ Произошла ошибка при получении данных профиля.")
         print(e)
+
 
 
 @router.message(F.text == "🎮 Меню игр🎮")
