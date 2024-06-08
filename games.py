@@ -16,9 +16,9 @@ async def slot_machine():
     if bet == ["🌟", "🌟", "🌟"]:
         return "500", bet
     if bet == ["🎰", "🎰", "🎰"]:
-        return "1000000000", bet
+        return "1000000", bet
     if bet == ["🍒", "🍒", "🍒"]:
-        return "100000", bet
+        return "10000", bet
     else:
         return "Поражение", bet
 

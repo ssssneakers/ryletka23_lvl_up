@@ -73,6 +73,15 @@ async def check_item_shop(item):
         print(e)
         return
 
+async def delete_item_shop(item):
+    try:
+        with sqlite3.connect(path_to_db2) as conn:
+            cursor = conn.cursor()
+            cursor.execute('DELETE FROM shop WHERE item=?', (item,))
+    except Exception as e:
+        print(e)
+        return
+
 async def check_item():
     try:
         with sqlite3.connect(path_to_db2) as conn:

@@ -3,7 +3,6 @@ import os
 from aiogram import Router, F
 from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
-from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.filters.command import Command
 from aiogram.types import FSInputFile
@@ -12,36 +11,10 @@ from config import admin_ids
 from database import *
 from games import *
 from buttons import *
+from Clas import *
 
 router = Router()
 replay = True
-
-
-class Bet(StatesGroup):
-    next = State()
-
-
-class Transfer(StatesGroup):
-    name = State()
-    sum = State()
-    text = State()
-
-
-class Edit(StatesGroup):
-    username = State()
-    money = State()
-
-
-class Shop(StatesGroup):
-    object = State()
-    price = State()
-    about = State()
-
-
-class Buy(StatesGroup):
-    object = State()
-    price = State()
-
 
 @router.message(CommandStart())
 async def start(message: Message):
@@ -97,12 +70,13 @@ async def shop(message: Message, state: FSMContext):
         if not shop1:
             await message.answer("Магазин пуст", reply_markup=menu_markup)
             return
-        await message.answer("Вы в магазине:")
-        await message.answer("Выберите предмет:", reply_markup=await ReplyItem())
-        await message.answer("🛒Магазин🛒\n"
-                             f"{shop1}")
+        items_message = "Вы в магазине:\nВыберите предмет:\n"
+        for item_name, price, about in shop1:
+            items_message += f"- 📦{item_name}: {price} $.     - {about}\n"
+        await message.answer(items_message, reply_markup=await ReplyItem())
         await state.set_state(Buy.object)
     except Exception as e:
+        await message.answer(f"Произошла ошибка: {e}")
         print(e)
 
 
@@ -387,22 +361,29 @@ async def bet(message: Message, state: FSMContext):
         user_id = message.from_user.id
         balance = await get_balance(user_id)
         bet_1 = message.text
+        if not bet_1.isdigit():
+            await message.answer("Некорректная ставка")
+            return
         if balance < int(bet_1):
             await message.answer("Недостаточно средств")
             return
-        if int(bet_1) < 0:
+        if int(bet_1) <= 0:
             await message.answer("Ставка не может быть отрицательной")
             return
-        balance -= int(bet_1)
-        await edit_balance(user_id, balance)
         answer, rate = await slot_machine()
         await message.answer(f'{str(rate[0])}, {str(rate[1])}, {str(rate[2])}')
         if answer == "Поражение":
-            await message.answer("Вы проиграли", reply_markup=game3)
-        else:
-            await message.answer("Вы выиграли", reply_markup=game3)
-            balance = bet_1 * int(answer)
+            await message.answer(f"Вы проиграли\n"
+                                 f"-{bet_1}", reply_markup=game3)
+            balance -= int(bet_1)
             await edit_balance(user_id, balance)
+        else:
+            balance -= int(bet_1)
+            win = int(bet_1) * int(answer)
+            balance += int(win)
+            await edit_balance(user_id, balance)
+            await message.answer("Вы выиграли"
+                                 f"+ {win}", reply_markup=game3)
         await state.clear()
     except Exception as e:
         print(e)
@@ -550,11 +531,32 @@ async def Shop_4(message: Message, state: FSMContext):
         price = data.get("price")
         about = data.get("about")
         await add_shop(username, Object, price, about)
-        await message.answer("Товар добавлен в базу данных")
+        await message.answer("Товар добавлен в базу данных",reply_markup=menu_markup)
         await state.clear()
     except Exception as e:
         print(e)
 
+@router.message(Command('delete'))
+async def stop(message: Message, state: FSMContext):
+    try:
+        user_id = message.from_user.id
+        if str(user_id) not in admin_ids:
+            await message.answer("Только для админов")
+            return
+        await message.answer("Введите название товара")
+        await state.set_state(Delete.name)
+    except Exception as e:
+        print(e)
+
+@router.message(Delete.name)
+async def delete(message: Message, state: FSMContext):
+    try:
+        name = message.text
+        await delete_item_shop(name)
+        await message.answer("Товар удален",reply_markup=menu_markup)
+        await state.clear()
+    except Exception as e:
+        print(e)
 
 @router.message(lambda message: True)
 async def unknown(message: Message, state: FSMContext):
