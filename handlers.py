@@ -32,6 +32,17 @@ class Edit(StatesGroup):
     money = State()
 
 
+class Shop(StatesGroup):
+    object = State()
+    price = State()
+    about = State()
+
+
+class Buy(StatesGroup):
+    object = State()
+    price = State()
+
+
 @router.message(CommandStart())
 async def start(message: Message):
     try:
@@ -39,8 +50,11 @@ async def start(message: Message):
         username = message.from_user.username
         database = await create_database()
         check_u = await check_user_top(user_id)
+        shoping = await create_shop()
         if not database:
             await create_database()
+        if not shoping:
+            await create_shop()
         if check_u[0] == 0:
             await add_message(user_id, username)
             await message.answer("Hello!", reply_markup=menu_markup)
@@ -72,6 +86,70 @@ async def tab(message: Message):
 async def menu(message: Message):
     try:
         await message.answer("Вы в меню:", reply_markup=games_markup)
+    except Exception as e:
+        print(e)
+
+
+@router.message(F.text == "🛒Магазин🛒")
+async def shop(message: Message, state: FSMContext):
+    try:
+        shop1 = await get_shop()
+        if not shop1:
+            await message.answer("Магазин пуст", reply_markup=menu_markup)
+            return
+        await message.answer("Вы в магазине:")
+        await message.answer("Выберите предмет:", reply_markup=await ReplyItem())
+        await message.answer("🛒Магазин🛒\n"
+                             f"{shop1}")
+        await state.set_state(Buy.object)
+    except Exception as e:
+        print(e)
+
+
+@router.message(Buy.object)
+async def shop_item(message: Message, state: FSMContext):
+    try:
+        user_id = message.from_user.id
+        item = message.text
+        user_kash = await get_balance(user_id)
+        ob = await check_item_shop(item)
+        item = ob[0][1]
+        item_price = ob[0][2]
+        await state.update_data(object=item)
+        await state.update_data(price=item_price)
+        await message.answer(f"Цена: {item_price} $")
+        if int(user_kash) < int(ob[0][2]):
+            await message.answer("Недостаточно средств", reply_markup=menu_markup)
+            await state.clear()
+            return
+        await message.answer(f"Вы уверенны что хотите купить {item} за {item_price} $?", reply_markup=yes_no_markup)
+        await state.set_state(Buy.price)
+    except Exception as e:
+        print(e)
+
+
+@router.message(Buy.price)
+async def yes_no(message: Message, state: FSMContext):
+    try:
+        user_id = message.from_user.id
+        user_kash = await get_balance(user_id)
+        data = await state.get_data()
+        item_name = data.get("object")
+        item_price = data.get("price")
+        Trade = f'Товар {item_name} куплен за {item_price} $'
+        anwser = message.text
+        if anwser == "✅ Да":
+            user_kash -= int(item_price)
+            await edit_balance(user_id, user_kash)
+            await add_trade(user_id, Trade)
+            await message.answer(f"Товар {item_name} куплен за {item_price} $", reply_markup=menu_markup)
+            await state.clear()
+        elif anwser == "❌ Нет":
+            await message.answer("Выберите предмет:", reply_markup=await ReplyItem())
+            await state.clear()
+        else:
+            await message.answer("Выберите предмет:", reply_markup=await ReplyItem())
+            await state.clear()
     except Exception as e:
         print(e)
 
@@ -355,7 +433,6 @@ async def back_Reply(message: Message):
         print(e)
 
 
-
 @router.message(Command('base'))
 async def base(message: Message):
     try:
@@ -420,6 +497,61 @@ async def edit_balik_2(message: Message, state: FSMContext):
         user_id = await check_user_id(name)
         await edit_balance(user_id[0], bal)
         await message.answer("Баланс изменен", reply_markup=menu_markup)
+    except Exception as e:
+        print(e)
+
+
+@router.message(Command('Shop'))
+async def Shop_1(message: Message, state: FSMContext):
+    try:
+        user_id = message.from_user.id
+        await state.set_state(Shop.object)
+        if str(user_id) not in admin_ids:
+            await message.answer("Только для админов")
+            return
+        await message.answer("Введите название товара")
+    except Exception as e:
+        print(e)
+
+
+@router.message(Shop.object)
+async def Shop_2(message: Message, state: FSMContext):
+    try:
+        item = message.text
+        await state.update_data(object=item)
+        await message.answer("Введите цену:")
+        await state.set_state(Shop.price)
+    except Exception as e:
+        print(e)
+
+
+@router.message(Shop.price)
+async def Shop_3(message: Message, state: FSMContext):
+    try:
+        price = message.text
+        if price.isdigit() is False:
+            await message.answer("Цена должна быть числом")
+            return
+        await state.update_data(price=price)
+        await message.answer("Введите описание:")
+        await state.set_state(Shop.about)
+    except Exception as e:
+        print(e)
+
+
+@router.message(Shop.about)
+async def Shop_4(message: Message, state: FSMContext):
+    try:
+        username = message.from_user.username
+        about = message.text
+        await state.update_data(about=about)
+        data = await state.get_data()
+        Object = data.get("object")
+        price = data.get("price")
+        about = data.get("about")
+        await add_shop(username, Object, price, about)
+        await message.answer("Товар добавлен в базу данных")
+        await state.clear()
     except Exception as e:
         print(e)
 

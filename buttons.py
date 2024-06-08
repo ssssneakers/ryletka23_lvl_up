@@ -1,8 +1,12 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
+from database import check_item
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
+
 
 # 🎮 Меню игр
 menu_markup = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text='🎮 Меню игр🎮')],
+    [KeyboardButton(text='🛒Магазин🛒')],
     [KeyboardButton(text='👤 Профиль👤')],
     [KeyboardButton(text='🏆Таблица лидеров 🏆')],
     [KeyboardButton(text='💵Перевод💵')],
@@ -41,3 +45,17 @@ game3 = ReplyKeyboardMarkup(keyboard=[
 back = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text='↩️ Назад')]
 ], resize_keyboard=True)
+
+yes_no_markup = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton(text='✅ Да')],
+    [KeyboardButton(text='❌ Нет')]
+], resize_keyboard=True)
+
+async def ReplyItem():
+    items = await check_item()
+    if not items:
+        return None
+    keyboard = ReplyKeyboardBuilder()
+    for i in items:
+        keyboard.add(KeyboardButton(text=i[0]))
+    return keyboard.adjust(2).as_markup()
