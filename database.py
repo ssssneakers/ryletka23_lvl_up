@@ -15,7 +15,8 @@ async def create_database():
                 CREATE TABLE IF NOT EXISTS user_database (
                 user_id INTEGER PRIMARY KEY,
                 user_money INTEGER,
-                user_name TEXT)
+                user_name TEXT,
+                user_trade TEXT)
             ''')
             logging.info("DATABASE: База данных 1 создана")  # делаем запись в логах
     except Exception as e:
@@ -30,9 +31,9 @@ async def add_message(user_id, username):
             cursor = conn.cursor()
             # создаём таблицу messages
             cursor.execute('''
-                INSERT INTO user_database (user_id, user_money, user_name)
-                VALUES (?, ?, ?)
-            ''', (user_id, user_money, username))
+                INSERT INTO user_database (user_id, user_money, user_name, user_trade)
+                VALUES (?, ?, ?, ?)
+            ''', (user_id, user_money, username, ''))
             logging.info("DATABASE: База данных 1 создана")  # делаем запись в логах
     except Exception as e:
         print(e)
@@ -56,6 +57,18 @@ async def check_user_id(username):
             cursor = conn.cursor()
             # выполняем запрос к базе данных
             cursor.execute('SELECT user_id FROM user_database WHERE user_name=?', (username,))
+            logging.info("DATABASE: Пользователь в поиске")  # делаем запись в логах
+            return cursor.fetchone()
+    except Exception as e:
+        logging.error("Ошибка в базе данных: ", e)  # если ошибка - записываем её в логи
+        return
+
+async def check_user_name(user_id):
+    try:
+        with sqlite3.connect(path_to_db1) as conn:
+            cursor = conn.cursor()
+            # выполняем запрос к базе данных
+            cursor.execute('SELECT user_name FROM user_database WHERE user_id=?', (user_id,))
             logging.info("DATABASE: Пользователь в поиске")  # делаем запись в логах
             return cursor.fetchone()
     except Exception as e:
@@ -111,6 +124,18 @@ async def get_all_balance():
             # Измените запрос, чтобы получить идентификатор пользователя и его баланс
             cursor.execute('''
                 SELECT user_id, user_money FROM user_database
+            ''')
+            return cursor.fetchall()
+    except Exception as e:
+        print(e)
+
+async def get_all_balance_name():
+    try:
+        with sqlite3.connect(path_to_db1) as conn:
+            cursor = conn.cursor()
+            # Измените запрос, чтобы получить идентификатор пользователя и его баланс
+            cursor.execute('''
+                SELECT user_name, user_money FROM user_database
             ''')
             return cursor.fetchall()
     except Exception as e:

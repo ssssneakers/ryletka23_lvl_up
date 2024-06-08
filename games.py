@@ -49,7 +49,7 @@ async def rock_paper_scissors(user_answer):
 
 
 async def russian_roulette(user_choice):
-    bot_choice = random.randint(0, 7)
+    bot_choice = random.randint(0, 6)
     if bot_choice == user_choice:
         return "Смерть"
     else:

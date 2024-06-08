@@ -1,6 +1,5 @@
 import os
 
-
 from aiogram import Router, F
 from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
@@ -26,6 +25,11 @@ class Transfer(StatesGroup):
     name = State()
     sum = State()
     text = State()
+
+
+class Edit(StatesGroup):
+    username = State()
+    money = State()
 
 
 @router.message(CommandStart())
@@ -62,7 +66,6 @@ async def tab(message: Message):
     except Exception as e:
         await message.answer("❗️ Произошла ошибка при получении данных профиля.")
         print(e)
-
 
 
 @router.message(F.text == "🎮 Меню игр🎮")
@@ -185,15 +188,15 @@ async def game_1_1(callback: CallbackQuery):
         result = await rock_paper_scissors("камень")
         await callback.message.edit_text(result)
         if result == "Победа":
-            balance = await get_balance(user_id)
-            balance += 100
-            await edit_balance(user_id, balance)
+            Balance = await get_balance(user_id)
+            Balance += 100
+            await edit_balance(user_id, Balance)
             await callback.message.answer(str(+100), reply_markup=game1)
         elif result == "Поражение":
-            balance = await get_balance(user_id)
-            if balance < 100:
-                balance = 0
-                await edit_balance(user_id, balance)
+            Balance = await get_balance(user_id)
+            if Balance < 100:
+                Balance = 0
+                await edit_balance(user_id, Balance)
         else:
             await callback.message.answer("Ваш баланс не изменился", reply_markup=game1)
     except Exception as e:
@@ -260,7 +263,7 @@ async def game_2_1(callback: CallbackQuery):
         if balance <= 0:
             await callback.message.edit_text("Недостаточно средств", reply_markup=games_markup)
             return
-        user_choice = random.randint(0, 7)
+        user_choice = 1
         result = await russian_roulette(user_choice)
         await callback.message.edit_text(result)
         if result == "Победа":
@@ -278,11 +281,11 @@ async def game_2_1(callback: CallbackQuery):
 @router.message(F.text == "📞 Контакты📞")
 async def contacts(message: Message):
     try:
-        await message.answer("🧠 Гений\n"
-                             "💼 Плейбой\n"
-                             "💵 Миллионер\n"
-                             "❤️ Филантроп\n"
-                             "🔗 да и просто: [Хозяин](https://t.me/Programist337)",
+        await message.answer("🧠 Гений 🧠\n"
+                             "💼 Плейбой 💼\n"
+                             "💵 Миллионер 💵\n"
+                             "❤️ Филантроп ❤️\n"
+                             "🔗 да и просто : [Хозяин](https://t.me/Programist337)",
                              reply_markup=menu_markup,
                              parse_mode='Markdown')
     except Exception as e:
@@ -320,7 +323,7 @@ async def bet(message: Message, state: FSMContext):
             await message.answer("Вы проиграли", reply_markup=game3)
         else:
             await message.answer("Вы выиграли", reply_markup=game3)
-            balance = balance * int(answer)
+            balance = bet_1 * int(answer)
             await edit_balance(user_id, balance)
         await state.clear()
     except Exception as e:
@@ -352,6 +355,7 @@ async def back_Reply(message: Message):
         print(e)
 
 
+
 @router.message(Command('base'))
 async def base(message: Message):
     try:
@@ -368,3 +372,59 @@ async def base(message: Message):
 
     except Exception as e:
         print(e)
+
+
+@router.message(Command('balance'))
+async def balance(message: Message, state: FSMContext):
+    try:
+        all_users = await get_all_balance_name()
+        user_id = message.from_user.id
+        if str(user_id) not in admin_ids:
+            await message.answer("Только для админов")
+            return
+        await message.answer("Вы прошли проверку")
+        await message.answer("Гружу список пользователей")
+        await message.answer(f"Список пользователей:{all_users}")
+        await message.answer("Скиньте имя пользователя")
+        await state.set_state(Edit.username)
+    except Exception as e:
+        print(e)
+
+
+@router.message(Edit.username)
+async def edit_balik(message: Message, state: FSMContext):
+    try:
+        name = message.text
+        balik = await check_username(name)
+        if balik is None:
+            await message.answer("Пользователь не найден")
+            return
+        await message.answer(f"Баланс пользователя {name}: {balik[0]}")
+        await message.answer(f"Выберете новый баланс для пользователя {name}")
+        await state.update_data(username=name)
+        await state.set_state(Edit.money)
+    except Exception as e:
+        print(e)
+
+
+@router.message(Edit.money)
+async def edit_balik_2(message: Message, state: FSMContext):
+    try:
+        money = message.text
+        if money.isdigit() is False:
+            await message.answer("Сумма должна быть числом")
+            return
+        data = await state.get_data()
+        name = data.get("username")
+        bal = int(money)
+        user_id = await check_user_id(name)
+        await edit_balance(user_id[0], bal)
+        await message.answer("Баланс изменен", reply_markup=menu_markup)
+    except Exception as e:
+        print(e)
+
+
+@router.message(lambda message: True)
+async def unknown(message: Message, state: FSMContext):
+    await message.answer("Неизвестная команда. Отправляю в меню", reply_markup=menu_markup)
+    await state.clear()

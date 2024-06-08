@@ -6,7 +6,7 @@ menu_markup = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text='👤 Профиль👤')],
     [KeyboardButton(text='🏆Таблица лидеров 🏆')],
     [KeyboardButton(text='💵Перевод💵')],
-    [KeyboardButton(text='📞 Контакты')]
+    [KeyboardButton(text='📞 Контакты📞')]
 ], resize_keyboard=True,
     input_field_placeholder='👉 Выберите пункт меню'
 )
